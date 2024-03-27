@@ -23,10 +23,10 @@ def get_stock_data(ticker, start_date, end_date):
     return data
 
 
-# In[68]:
+# In[84]:
 
 
-def plot_chart(data):
+def plot_chart(data, ticker):
     data = data.reset_index()
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=data['Date'], y=data['Adj Close'], mode='lines', name=f'{ticker} Stock Price'))
@@ -45,10 +45,10 @@ def plot_chart(data):
     st.plotly_chart(fig)
 
 
-# In[79]:
+# In[85]:
 
 
-def forecast_stock_price(data):
+def forecast_stock_price(data, ticker):
     if len(data) >= 251:
         data = data.reset_index()
         df = data[['Date', 'Adj Close']]
@@ -68,26 +68,41 @@ def forecast_stock_price(data):
         st.warning("Not enough historical data available for forecasting. (Select at least twelve months of data to forecast)")
 
 
-# In[70]:
+# In[87]:
 
 
-st.title('Portfolio Optimization Tool')
+def main():
+    st.title('Portfolio Optimization Tool')
 
-ticker = st.text_input('Enter Stock Ticker (e.g., AAPL):')
-start_date = st.date_input('Select Start Date:')
-end_date = st.date_input('Select End Date:')
+    st.sidebar.title('Navigate')
+    page = st.sidebar.selectbox('Page', ["Explore Stocks", "Build Your Portfolio"])
 
-if ticker:
-    data = get_stock_data(ticker, start_date, end_date)
-    if not data.empty:
+    if page == "Explore Stocks":
+        st.subheader('View Stock Data')
         
-        if st.button('View Chart'):
-            plot_chart(data)
+        ticker = st.text_input('Enter Stock Ticker (e.g., AAPL):').upper()
+        start_date = st.date_input('Select Start Date:')
+        end_date = st.date_input('Select End Date:')
+    
+        if ticker:
+            data = get_stock_data(ticker, start_date, end_date)
+            if not data.empty:
+                
+                if st.button('View Chart'):
+                    plot_chart(data, ticker)
+                    
+                st.subheader('Make a Forecast')
+                if st.button('Forecast'):
+                    forecast_stock_price(data, ticker)
+            else:
+                st.warning('No data found for the selected stock ticker and timeframe.')
 
-        if st.button('Forecast'):
-            forecast_stock_price(data)
-    else:
-        st.warning('No data found for the selected stock ticker and timeframe.')
+
+# In[83]:
+
+
+if __name__ == "__main__":
+    main()
 
 
 # In[ ]:
