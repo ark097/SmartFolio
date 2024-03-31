@@ -138,6 +138,7 @@ def main():
         st.subheader('View Stock Data')
         
         ticker = st.text_input('Enter Stock Ticker (e.g., AAPL):').upper()
+        
         start_date = st.date_input('Select Start Date:')
         end_date = st.date_input('Select End Date:')
     
@@ -161,7 +162,7 @@ def main():
             weights, returns, volatility, sharpe_ratio = build_portfolio(tickers, risk_free_rate)
 
             st.pyplot(plot_portfolio_weights_chart(weights, tickers))
-            data = {'Filtered Tickers': tickers, 'Filtered Weights': weights}
+            data = {'Tickers': tickers, 'Weights': weights}
             df = pd.DataFrame(data)
             st.table(df)
             st.write(f'Expected Returns: {round(returns*100,2)}%')
