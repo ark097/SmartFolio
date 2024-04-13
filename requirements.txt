@@ -3,4 +3,4 @@ Prophet
 fredapi
 scipy
 plotly
-pypfopt
+PyPortfolioOpt
