@@ -230,7 +230,7 @@ def black_litterman_portfolio(symbols, viewdict, start_date, end_date):
 def main():
     risk_free_rate = get_risk_free_rate()
     company_ticker_map = {}
-    with open('all_tickerz.txt', 'r') as file:
+    with open('all_tickers.txt', 'r') as file:
         for line in file:
             company_name, ticker = line.split('\t')
             company_ticker_map[company_name.strip()] = ticker.strip()
