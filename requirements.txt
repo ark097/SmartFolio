@@ -5,3 +5,4 @@ scipy
 plotly
 pypfopt.black_litterman
 pypfopt
+streamlit

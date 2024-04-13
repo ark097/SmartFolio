@@ -229,8 +229,14 @@ def black_litterman_portfolio(symbols, viewdict, start_date, end_date):
 
 def main():
     risk_free_rate = get_risk_free_rate()
-    ticker_file = open("all_tickers.txt", "r") 
-    all_tickers = ticker_file.read().split('\n')
+    company_ticker_map = {}
+    with open('all_tickerz.txt', 'r') as file:
+        for line in file:
+            company_name, ticker = line.split('\t')
+            company_ticker_map[company_name.strip()] = ticker.strip()
+
+    all_tickers = [f"{company_name} - {ticker}" for company_name, ticker in company_ticker_map.items()]
+
     # st.title('Portfolio Optimization Tool')
 
     st.sidebar.title('Navigate')
@@ -275,27 +281,33 @@ def main():
         )
 
     if page == "Explore Stocks":
-        st.subheader('View Stock Data')
+        st.subheader('View Stock Data and Make Forecasts')
         
-        ticker = st.text_input('Enter Stock Ticker (e.g., AAPL):').upper()
-        
+        selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)        
         start_date = st.date_input('Select Start Date:')
         end_date = st.date_input('Select End Date:')
-    
-        if ticker:
-            data = get_stock_data(ticker, start_date, end_date)
-            if not data.empty:
-                
-                if st.button('View Chart'):
-                    plot_chart(data, ticker)
-                    
-                st.subheader('Make a Forecast')
-                if st.button('Forecast'):
-                    forecast_stock_price(data, ticker)
-            else:
-                st.warning('No data found for the selected stock ticker and timeframe.')
 
-        pass
+        view_charts = st.button('View Charts')
+        view_forecasts = st.button('Forecast')
+    
+        if view_charts:
+            for stock in selected_stocks:
+                ticker = stock.split('-')[1].strip()
+                data = get_stock_data(ticker, start_date, end_date)
+                if not data.empty:
+                    plot_chart(data, ticker)
+                else:
+                    st.warning(f'No data found for {ticker} for the selected timeframe.')
+    
+        if view_forecasts:
+            for stock in selected_stocks:
+                ticker = stock.split('-')[1].strip()
+                data = get_stock_data(ticker, start_date, end_date)
+                if not data.empty:
+                    st.subheader(f'Forecast for {ticker}')
+                    forecast_stock_price(data, ticker)
+                else:
+                    st.warning(f'No data found for {ticker} for the selected timeframe.')
 
     if page == "Build Your Portfolio":
 
@@ -305,7 +317,8 @@ def main():
 
         if subpage == 'Low-risk Strategy':
             st.subheader('Low-risk Portfolio Strategy - Markowitz model')
-            tickers = st.multiselect('Select Stock Tickers', all_tickers)
+            selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)
+            tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
             start_date = st.date_input('Select Start Date:', max_value=max_end_date)
             end_date = st.date_input('Select End Date:', max_value=max_end_date)
 
@@ -327,7 +340,8 @@ def main():
         elif subpage == 'High-risk Strategy':
             # BL model
             st.subheader('High-risk Portfolio Strategy - Black-Litterman model')
-            tickers = st.multiselect('Select Stock Tickers', all_tickers)
+            selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)
+            tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
             start_date = st.date_input('Select Start Date:', max_value=max_end_date)
             end_date = st.date_input('Select End Date:', max_value=max_end_date)
 
