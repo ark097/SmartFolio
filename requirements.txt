@@ -3,6 +3,5 @@ prophet
 fredapi
 scipy
 plotly
-pypfopt.black_litterman
-pypfopt
+PyPortfolioOpt
 streamlit
