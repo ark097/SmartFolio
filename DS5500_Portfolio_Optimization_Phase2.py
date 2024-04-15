@@ -224,7 +224,164 @@ def black_litterman_portfolio(symbols, viewdict, start_date, end_date):
     return weights, performance
 
 
-# In[39]:
+# In[61]:
+
+
+def homepage():
+    st.markdown("""
+        <style>
+            .stApp {
+                background: url("https://www.pixel4k.com/wp-content/uploads/2021/05/abstract-waving-4k_1620165379.jpg") no-repeat center center fixed;
+                background-size: cover;
+                -webkit-background-size: cover;
+                -moz-background-size: cover;
+                -o-background-size: cover;
+            }
+            
+            .fullScreen {
+                background-color: transparent;
+            }
+            
+            h1, p {
+                text-align: center; /* This will align the text center horizontally */
+                margin: 0; /* This removes the default margin */
+                padding: 0.25em 0; /* This adds a little padding top and bottom */
+                justify-content: center;
+                color: white;
+            }
+
+            h1 {
+                font-size: 3em;
+                font-weight: bold;
+            }
+
+            p {
+                font-size: 1.5em;
+            }
+
+        </style>
+        <div class="fullScreen">
+            <h1>Portfolio Visualizer</h1>
+            <p>Complete toolkit to help you visualize, analyze, and optimize your portfolios and investment strategies.</p>
+            <p>Start by selecting one of the options from the left navigation pane.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# In[59]:
+
+
+def explore_stocks_page(all_tickers):
+    max_end_date = datetime.today()
+    
+    st.subheader('View Stock Data and Make Forecasts')  
+    selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)        
+    start_date = st.date_input('Select Start Date:', max_value=max_end_date)
+    end_date = st.date_input('Select End Date:', max_value=max_end_date)
+
+    view_charts = st.button('View Charts')
+    view_forecasts = st.button('Forecast')
+
+    if view_charts:
+        for stock in selected_stocks:
+            ticker = stock.split('-')[1].strip()
+            data = get_stock_data(ticker, start_date, end_date)
+            if not data.empty:
+                plot_chart(data, ticker)
+            else:
+                st.warning(f'No data found for {ticker} for the selected timeframe.')
+
+    if view_forecasts:
+        for stock in selected_stocks:
+            ticker = stock.split('-')[1].strip()
+            data = get_stock_data(ticker, start_date, end_date)
+            if not data.empty:
+                st.subheader(f'Forecast for {ticker}')
+                forecast_stock_price(data, ticker)
+            else:
+                st.warning(f'No data found for {ticker} for the selected timeframe.')
+
+
+# In[60]:
+
+
+def build_portfolio_page(all_tickers, risk_free_rate):
+    subpage = st.sidebar.radio('Select Strategy', ['Low-risk Strategy', 'High-risk Strategy'])
+
+    max_end_date = datetime.today()
+
+    if subpage == 'Low-risk Strategy':
+        st.subheader('Low-risk Portfolio Strategy - Markowitz model')
+        selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)
+        tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
+        start_date = st.date_input('Select Start Date:', max_value=max_end_date)
+        end_date = st.date_input('Select End Date:', max_value=max_end_date)
+
+        if start_date == end_date or (end_date-start_date).days<90:
+            st.write('Please select a start date at least **3 months** in the past for accurate results!')
+        else:
+            submit_button = st.button('Submit')
+            if submit_button and tickers:
+                weights, returns, volatility, sharpe_ratio = build_portfolio(tickers, risk_free_rate, start_date, end_date)
+
+                st.pyplot(plot_portfolio_weights_chart(weights, tickers))
+                data = {'Tickers': tickers, 'Weights': weights}
+                df = pd.DataFrame(data)
+                st.table(df)
+                st.write(f'Expected Returns: {round(returns*100,2)}%')
+                st.write(f'Expected Volatility: {round(volatility*100,2)}%')
+                st.write(f'Sharpe Ratio: {round(sharpe_ratio, 4)}')
+
+    elif subpage == 'High-risk Strategy':
+        # BL model
+        st.subheader('High-risk Portfolio Strategy - Black-Litterman model')
+        selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)
+        tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
+        start_date = st.date_input('Select Start Date:', max_value=max_end_date)
+        end_date = st.date_input('Select End Date:', max_value=max_end_date)
+
+        if start_date == end_date or (end_date-start_date).days<90:
+            st.write('Please select a start date at least **3 months** in the past for accurate results!')
+        else:
+            data_BL_all = {ticker: get_stock_data(ticker, start_date, end_date) for ticker in tickers}
+            
+            st.subheader('Investor Views')
+            investor_views = {}
+            
+            # Calculate default investor view
+            for ticker in tickers:
+                data_BL = data_BL_all[ticker]
+                forecasted_ticker_price = forecast_stock_price(data_BL, ticker, investor_view=True, start_date=start_date, end_date=end_date)['yhat']
+                end_date_ticker_price = data_BL['Adj Close'].iloc[-1]
+                net_change = ((forecasted_ticker_price - end_date_ticker_price) / end_date_ticker_price)
+                view = st.number_input(f'Enter your view for {ticker}: (My views: {round(net_change.item(),2)})', value=net_change.item(), min_value=-1.0, max_value=1.0, step=0.01)
+                investor_views[ticker] = view
+
+            submit_button = st.button('Submit')
+
+            if submit_button and tickers and investor_views:
+                weights, performance = black_litterman_portfolio(tickers, investor_views, start_date, end_date)
+
+                # Displayoing the weights as a pie chart
+                fig, ax = plt.subplots(figsize=(9, 9))
+                pd.Series(weights).plot.pie(ax=ax, autopct='%1.1f%%')
+                ax.set_aspect('equal')
+                ax.set_title('Portfolio Weights')
+                st.pyplot(fig)
+
+                # Displaying the performance metrics
+                expected_return, expected_volatility, sharpe_ratio = performance
+                st.write("Expected Returns:", round(expected_return*100, 2), "%")
+                st.write("Expected Volatility:", round(expected_volatility*100, 2), "%")
+                st.write("Sharpe Ratio:", round(sharpe_ratio, 4))
+    
+    else:
+        st.write('Select a strategy from the sidebar')
+
+    pass
+
+
+# In[63]:
 
 
 def main():
@@ -244,146 +401,16 @@ def main():
     page = st.sidebar.selectbox('Page', ["Home", "Explore Stocks", "Build Your Portfolio"])
 
     if page == "Home":
-        st.markdown(
-            """
-            <style>
-            .homepage-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100vh;
-                color: white;
-                text-align: center;
-                padding: 0 20px;
-            }
 
-            .homepage-content {
-                max-width: 2000px;
-                margin-bottom: 500px;
-            }
-
-            .homepage-text {
-                margin-bottom: 10px;
-                font-size: 45px;
-            }
-            
-            </style>
-            <div class="homepage-container">
-                <div class="homepage-content">
-                    <h1 class="homepage-text"><u>Portfolio Optimization Tool</u></h1>
-                    <h2 class="homepage-text">This tool helps you explore stocks and build your investment portfolio.</h2>
-                    <h2 class="homepage-text">Begin by selecting <u>Explore Stocks</u> or <u>Build Your Portfolio</u> from the left pane.</h2>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        homepage()
 
     if page == "Explore Stocks":
-        st.subheader('View Stock Data and Make Forecasts')
         
-        selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)        
-        start_date = st.date_input('Select Start Date:')
-        end_date = st.date_input('Select End Date:')
-
-        view_charts = st.button('View Charts')
-        view_forecasts = st.button('Forecast')
-    
-        if view_charts:
-            for stock in selected_stocks:
-                ticker = stock.split('-')[1].strip()
-                data = get_stock_data(ticker, start_date, end_date)
-                if not data.empty:
-                    plot_chart(data, ticker)
-                else:
-                    st.warning(f'No data found for {ticker} for the selected timeframe.')
-    
-        if view_forecasts:
-            for stock in selected_stocks:
-                ticker = stock.split('-')[1].strip()
-                data = get_stock_data(ticker, start_date, end_date)
-                if not data.empty:
-                    st.subheader(f'Forecast for {ticker}')
-                    forecast_stock_price(data, ticker)
-                else:
-                    st.warning(f'No data found for {ticker} for the selected timeframe.')
+        explore_stocks_page(all_tickers)
 
     if page == "Build Your Portfolio":
 
-        subpage = st.sidebar.radio('Select Strategy', ['Low-risk Strategy', 'High-risk Strategy'])
-
-        max_end_date = datetime.today()
-
-        if subpage == 'Low-risk Strategy':
-            st.subheader('Low-risk Portfolio Strategy - Markowitz model')
-            selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)
-            tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
-            start_date = st.date_input('Select Start Date:', max_value=max_end_date)
-            end_date = st.date_input('Select End Date:', max_value=max_end_date)
-
-            if start_date == end_date or (end_date-start_date).days<90:
-                st.write('Please select a start date at least **3 months** in the past for accurate results!')
-            else:
-                submit_button = st.button('Submit')
-                if submit_button and tickers:
-                    weights, returns, volatility, sharpe_ratio = build_portfolio(tickers, risk_free_rate, start_date, end_date)
-    
-                    st.pyplot(plot_portfolio_weights_chart(weights, tickers))
-                    data = {'Tickers': tickers, 'Weights': weights}
-                    df = pd.DataFrame(data)
-                    st.table(df)
-                    st.write(f'Expected Returns: {round(returns*100,2)}%')
-                    st.write(f'Expected Volatility: {round(volatility*100,2)}%')
-                    st.write(f'Sharpe Ratio: {round(sharpe_ratio, 4)}')
-
-        elif subpage == 'High-risk Strategy':
-            # BL model
-            st.subheader('High-risk Portfolio Strategy - Black-Litterman model')
-            selected_stocks = st.multiselect('Select Stock Tickers', all_tickers)
-            tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
-            start_date = st.date_input('Select Start Date:', max_value=max_end_date)
-            end_date = st.date_input('Select End Date:', max_value=max_end_date)
-
-            if start_date == end_date or (end_date-start_date).days<90:
-                st.write('Please select a start date at least **3 months** in the past for accurate results!')
-            else:
-                data_BL_all = {ticker: get_stock_data(ticker, start_date, end_date) for ticker in tickers}
-                
-                st.subheader('Investor Views')
-                investor_views = {}
-                
-                # Calculate default investor view
-                for ticker in tickers:
-                    data_BL = data_BL_all[ticker]
-                    forecasted_ticker_price = forecast_stock_price(data_BL, ticker, investor_view=True, start_date=start_date, end_date=end_date)['yhat']
-                    end_date_ticker_price = data_BL['Adj Close'].iloc[-1]
-                    net_change = ((forecasted_ticker_price - end_date_ticker_price) / end_date_ticker_price)
-                    view = st.number_input(f'Enter your view for {ticker}: (My views: {round(net_change.item(),2)})', value=net_change.item(), min_value=-1.0, max_value=1.0, step=0.01)
-                    investor_views[ticker] = view
-    
-                submit_button = st.button('Submit')
-    
-                if submit_button and tickers and investor_views:
-                    weights, performance = black_litterman_portfolio(tickers, investor_views, start_date, end_date)
-    
-                    # Displayoing the weights as a pie chart
-                    fig, ax = plt.subplots(figsize=(9, 9))
-                    pd.Series(weights).plot.pie(ax=ax, autopct='%1.1f%%')
-                    ax.set_aspect('equal')
-                    ax.set_title('Portfolio Weights')
-                    st.pyplot(fig)
-    
-                    # Displaying the performance metrics
-                    expected_return, expected_volatility, sharpe_ratio = performance
-                    st.write("Expected Returns:", round(expected_return*100, 2), "%")
-                    st.write("Expected Volatility:", round(expected_volatility*100, 2), "%")
-                    st.write("Sharpe Ratio:", round(sharpe_ratio, 4))
-        
-        else:
-            st.write('Select a strategy from the sidebar')
-
-        pass
+        build_portfolio_page(all_tickers, risk_free_rate)
 
 
 # In[40]:
