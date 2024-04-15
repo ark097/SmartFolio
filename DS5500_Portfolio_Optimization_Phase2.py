@@ -243,9 +243,8 @@ def homepage():
             }
             
             h1, p {
-                text-align: center; /* This will align the text center horizontally */
-                margin: 0; /* This removes the default margin */
-                padding: 0.25em 0; /* This adds a little padding top and bottom */
+                text-align: center;
+                margin: 0;
                 justify-content: center;
                 color: white;
             }
@@ -253,15 +252,21 @@ def homepage():
             h1 {
                 font-size: 3em;
                 font-weight: bold;
+                margin-bottom: 1em;
             }
 
             p {
                 font-size: 1.5em;
+                margin-bottom: 2em;
+            }
+
+            st-emotion-cache-1629p8f e1nzilvr2 {
+            color: cyan !important;
             }
 
         </style>
         <div class="fullScreen">
-            <h1>Portfolio Visualizer</h1>
+            <a href="https://github.com/ark097/Portfolio_Opt" target="_blank" class="title-link"><h1>Portfolio Visualizer</h1></a>
             <p>Complete toolkit to help you visualize, analyze, and optimize your portfolios and investment strategies.</p>
             <p>Start by selecting one of the options from the left navigation pane.</p>
         </div>
