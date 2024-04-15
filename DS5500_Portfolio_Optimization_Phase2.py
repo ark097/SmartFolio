@@ -230,7 +230,10 @@ def black_litterman_portfolio(symbols, viewdict, start_date, end_date):
 def homepage():
     st.markdown("""
         <style>
-            .stApp {
+            html, body, .stApp, .stApp > div, .stApp > div > div {
+                width: 100%;
+                margin: 0;
+                padding: 0;
                 background: url("https://www.pixel4k.com/wp-content/uploads/2021/05/abstract-waving-4k_1620165379.jpg") no-repeat center center fixed;
                 background-size: cover;
                 -webkit-background-size: cover;
@@ -238,37 +241,29 @@ def homepage():
                 -o-background-size: cover;
             }
             
-            .fullScreen {
-                background-color: transparent;
-            }
-            
-            h1, p {
-                text-align: center;
-                margin: 0;
-                justify-content: center;
-                color: white;
+            .content {
+                color: white;  /* Ensures text color is white */
+                text-align: left;  /* Aligns text to the left */
+                padding-left: 0 !important;  /* Zero padding on the left */
+                margin-left: 0 !important;  /* Zero margin on the left */
             }
 
             h1 {
                 font-size: 3em;
                 font-weight: bold;
-                margin-bottom: 1em;
+                margin: 0;  /* Zero margin to remove any default spacing */
             }
-
+            
             p {
                 font-size: 1.5em;
-                margin-bottom: 2em;
+                margin: 0;  /* Zero margin to remove any default spacing */
             }
-
-            st-emotion-cache-1629p8f e1nzilvr2 {
-            color: cyan !important;
-            }
-
         </style>
-        <div class="fullScreen">
-            <a href="https://github.com/ark097/Portfolio_Opt" target="_blank" class="title-link"><h1>Portfolio Visualizer</h1></a>
-            <p>Complete toolkit to help you visualize, analyze, and optimize your portfolios and investment strategies.</p>
-            <p>Start by selecting one of the options from the left navigation pane.</p>
+        <div class="content">
+            <a href="https://github.com/ark097/Portfolio_Opt" target="_blank" style="color: white; text-decoration: none;">
+                <h1>SmartPort</h1>
+            </a>
+            <p>A simple application designed to assist you in forecasting and visualizing stock performances, and help build your portfolio using optimization techniques.</p>
         </div>
         """, unsafe_allow_html=True)
 
