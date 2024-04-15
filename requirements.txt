@@ -5,3 +5,4 @@ scipy
 plotly
 PyPortfolioOpt
 streamlit
+scikit-learn
