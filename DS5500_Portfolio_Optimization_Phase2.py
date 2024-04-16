@@ -228,6 +228,7 @@ def black_litterman_portfolio(symbols, viewdict, start_date, end_date):
 
 
 def homepage():
+    
     st.markdown("""
         <style>
             html, body, .stApp, .stApp > div, .stApp > div > div {
@@ -242,28 +243,41 @@ def homepage():
             }
             
             .content {
-                color: white;  /* Ensures text color is white */
-                text-align: left;  /* Aligns text to the left */
-                padding-left: 0 !important;  /* Zero padding on the left */
-                margin-left: 0 !important;  /* Zero margin on the left */
+                color: white;
+                text-align: left; 
+                padding-left: 0 !important; 
+                margin-left: 0 !important; 
             }
-
+            
+            .header {
+                display: flex;
+                align-items: center;
+            }
+    
             h1 {
-                font-size: 3em;
+                font-size: 2.75em;
                 font-weight: bold;
-                margin: 0;  /* Zero margin to remove any default spacing */
             }
             
             p {
-                font-size: 1.5em;
-                margin: 0;  /* Zero margin to remove any default spacing */
+                font-size: 1.3em;
+                margin-top: 30px;
             }
+
+            .favicon {
+                width: 35px;
+                height: auto;
+                vertical-align: middle;
+            }
+            
         </style>
         <div class="content">
-            <a href="https://github.com/ark097/Portfolio_Opt" target="_blank" style="color: white; text-decoration: none;">
-                <h1>SmartPort</h1>
-            </a>
-            <p>A simple application designed to assist you in forecasting and visualizing stock performances, and help build your portfolio using optimization techniques.</p>
+            <div class="header">
+                <img src="https://www.favicon.cc/logo3d/737096.png" class="favicon" alt="SmartFolio Logo">
+                <h1 style="color: white;">SmartFolio - Portfolio Optimizer</h1>
+            </div>
+            <p>A simple application designed to assist you in forecasting and visualizing stock performances, and to help build your portfolio using optimization techniques.</p>
+            <p>Begin by selecting an option from the left navigation pane.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -316,21 +330,26 @@ def build_portfolio_page(all_tickers, risk_free_rate):
         tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
         start_date = st.date_input('Select Start Date:', max_value=max_end_date)
         end_date = st.date_input('Select End Date:', max_value=max_end_date)
+        init_capital = st.number_input("Enter your initial capital (USD):", min_value=0.0, format="%.2f")
 
         if start_date == end_date or (end_date-start_date).days<90:
             st.write('Please select a start date at least **3 months** in the past for accurate results!')
         else:
             submit_button = st.button('Submit')
-            if submit_button and tickers:
+            if submit_button and tickers and init_capital>0:
                 weights, returns, volatility, sharpe_ratio = build_portfolio(tickers, risk_free_rate, start_date, end_date)
-
+                nonzero_weights = {ticker: weight for ticker, weight in zip(tickers, weights) if weight>0}
+                df = pd.DataFrame(list(nonzero_weights.items()), columns=['Ticker', 'Allocation (%)'])
+                df['Allocation (%)'] = (df['Allocation (%)'] * 100).round(1).astype(str) + '%'
+                expected_change = init_capital + init_capital * returns
                 st.pyplot(plot_portfolio_weights_chart(weights, tickers))
-                data = {'Tickers': tickers, 'Weights': weights}
-                df = pd.DataFrame(data)
                 st.table(df)
-                st.write(f'Expected Returns: {round(returns*100,2)}%')
-                st.write(f'Expected Volatility: {round(volatility*100,2)}%')
-                st.write(f'Sharpe Ratio: {round(sharpe_ratio, 4)}')
+                st.markdown(f"**Expected Returns:** {round(returns * 100, 2)}%")
+                st.markdown(f"**Expected Volatility:** {round(volatility * 100, 2)}%")
+                st.markdown(f"**Sharpe Ratio:** {round(sharpe_ratio, 2)}")
+                st.markdown(f"**Expected portfolio balance:** ${expected_change:.2f}")
+            else:
+                st.write('Before you hit Submit, Please ensure you have selected at least 1 stock and entered your initial capital!')
 
     elif subpage == 'High-risk Strategy':
         # BL model
@@ -339,6 +358,7 @@ def build_portfolio_page(all_tickers, risk_free_rate):
         tickers = [stock.split('-')[1].strip() for stock in selected_stocks]
         start_date = st.date_input('Select Start Date:', max_value=max_end_date)
         end_date = st.date_input('Select End Date:', max_value=max_end_date)
+        init_capital = st.number_input("Enter your initial capital (USD):", min_value=0.0, format="%.2f")
 
         if start_date == end_date or (end_date-start_date).days<90:
             st.write('Please select a start date at least **3 months** in the past for accurate results!')
@@ -359,7 +379,7 @@ def build_portfolio_page(all_tickers, risk_free_rate):
 
             submit_button = st.button('Submit')
 
-            if submit_button and tickers and investor_views:
+            if submit_button and tickers and investor_views and init_capital>0:
                 weights, performance = black_litterman_portfolio(tickers, investor_views, start_date, end_date)
 
                 # Displayoing the weights as a pie chart
@@ -371,9 +391,14 @@ def build_portfolio_page(all_tickers, risk_free_rate):
 
                 # Displaying the performance metrics
                 expected_return, expected_volatility, sharpe_ratio = performance
-                st.write("Expected Returns:", round(expected_return*100, 2), "%")
-                st.write("Expected Volatility:", round(expected_volatility*100, 2), "%")
-                st.write("Sharpe Ratio:", round(sharpe_ratio, 4))
+                expected_change = init_capital + init_capital * expected_return
+                st.markdown(f"**Expected Returns:** {round(expected_return * 100, 2)}%")
+                st.markdown(f"**Expected Volatility:** {round(expected_volatility * 100, 2)}%")
+                st.markdown(f"**Sharpe Ratio:** {round(sharpe_ratio, 2)}")
+                st.markdown(f"**Expected portfolio balance:** ${expected_change:.2f}")
+
+            else:
+                st.write('Before you hit Submit, Please ensure you have selected at least 1 stock and entered your initial capital!')
     
     else:
         st.write('Select a strategy from the sidebar')
@@ -394,8 +419,6 @@ def main():
 
     all_tickers = [f"{company_name} - {ticker}" for company_name, ticker in company_ticker_map.items()]
 
-    # st.title('Portfolio Optimization Tool')
-
     st.sidebar.title('Navigate')
 
     page = st.sidebar.selectbox('Page', ["Home", "Explore Stocks", "Build Your Portfolio"])
@@ -411,6 +434,33 @@ def main():
     if page == "Build Your Portfolio":
 
         build_portfolio_page(all_tickers, risk_free_rate)
+
+    # Author info and links section
+    st.sidebar.markdown("""<br><br><br><br><br><br><br><br><br><br><br><br>""", unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <style>
+        .info-box {
+            border: 1px solid #3B7080; 
+            color: #20435C; 
+            padding: 10px;
+            background-color: #E6EFF1;  
+            border-radius: 5px;
+        }
+        .info-box a {
+            color: #20435C; 
+            text-decoration: none;
+        }
+        .info-box a:hover {
+            color: #3B7080;
+            text-decoration: underline;
+        }
+    </style>
+    <div class="info-box">
+        <h4>About Me:</h4>
+        <a href="https://github.com/ark097" target="_blank">My Github</a><br>
+        <a href="https://github.com/ark097/Portfolio_Opt" target="_blank">Code</a>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # In[40]:
