@@ -235,11 +235,6 @@ def homepage():
                 width: 100%;
                 margin: 0;
                 padding: 0;
-                background: url("https://www.pixel4k.com/wp-content/uploads/2021/05/abstract-waving-4k_1620165379.jpg") no-repeat center center fixed;
-                background-size: cover;
-                -webkit-background-size: cover;
-                -moz-background-size: cover;
-                -o-background-size: cover;
             }
             
             .content {
@@ -406,10 +401,49 @@ def build_portfolio_page(all_tickers, risk_free_rate):
     pass
 
 
+# In[67]:
+
+
+def set_background():
+    st.markdown("""
+        <style>
+            .stApp {
+                background-image: url("https://www.colorhexa.com/2f2f4f.png");
+                background-size: cover;
+                background-position: center center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+def apply_white_text_style():
+    st.markdown("""
+        <style>
+            /* Targeting the main body directly, might override some Streamlit-specific styles */
+            body {
+                color: white;
+            }
+            .stTextInput > label, .stDateInput > label, .stNumberInput > label {
+                color: white;
+            }
+            .stMarkdown {
+                color: white; 
+            }
+            h3 {
+                color: white;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+
 # In[63]:
 
 
 def main():
+    st.set_page_config(layout="wide")
+    set_background()
+    
     risk_free_rate = get_risk_free_rate()
     company_ticker_map = {}
     with open('all_tickers.txt', 'r') as file:
@@ -429,16 +463,19 @@ def main():
 
     if page == "Explore Stocks":
         
+        apply_white_text_style()
         explore_stocks_page(all_tickers)
 
     if page == "Build Your Portfolio":
 
+        apply_white_text_style()
         build_portfolio_page(all_tickers, risk_free_rate)
 
     # Author info and links section
     st.sidebar.markdown("""<br><br><br><br><br><br><br><br><br><br><br><br>""", unsafe_allow_html=True)
     st.sidebar.markdown("""
     <style>
+
         .info-box {
             border: 1px solid #3B7080; 
             color: #20435C; 
