@@ -333,12 +333,8 @@ def build_portfolio_page(all_tickers, risk_free_rate):
             submit_button = st.button('Submit')
             if submit_button and tickers and init_capital>0:
                 weights, returns, volatility, sharpe_ratio = build_portfolio(tickers, risk_free_rate, start_date, end_date)
-                nonzero_weights = {ticker: weight for ticker, weight in zip(tickers, weights) if weight>0}
-                df = pd.DataFrame(list(nonzero_weights.items()), columns=['Ticker', 'Allocation (%)'])
-                df['Allocation (%)'] = (df['Allocation (%)'] * 100).round(1).astype(str) + '%'
                 expected_change = init_capital + init_capital * returns
                 st.pyplot(plot_portfolio_weights_chart(weights, tickers))
-                st.table(df)
                 st.markdown(f"**Expected Returns:** {round(returns * 100, 2)}%")
                 st.markdown(f"**Expected Volatility:** {round(volatility * 100, 2)}%")
                 st.markdown(f"**Sharpe Ratio:** {round(sharpe_ratio, 2)}")
