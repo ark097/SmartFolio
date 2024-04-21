@@ -48,3 +48,8 @@ Fork the Repository: Click on the 'Fork' button at the top right corner.
 **Push to the Branch**: git push origin feature/AmazingFeature
 
 **Open a Pull Request**
+
+## Contact
+
+**Email:** ramakrishnaachyut@gmail.com
+**Project link:** https://github.com/ark097/Portfolio_Opt
