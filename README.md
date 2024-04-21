@@ -39,17 +39,17 @@ We welcome contributions to SmartFolio! If you have suggestions for improvements
 
 Fork the Repository: Click on the 'Fork' button at the top right corner.
 
-**Clone your fork**: git clone https://github.com/ark097/Portfolio_Opt.git
+**Clone your fork**: `git clone https://github.com/ark097/SmartFolio.git`
 
-**Create your Feature Branch**: git checkout -b feature/AmazingFeature
+**Create your Feature Branch**: `git checkout -b feature/AmazingFeature`
 
-**Commit your Changes**: git commit -m 'Add some AmazingFeature'
+**Commit your Changes**: `git commit -m 'Add some AmazingFeature'`
 
-**Push to the Branch**: git push origin feature/AmazingFeature
+**Push to the Branch**: `git push origin feature/AmazingFeature`
 
 **Open a Pull Request**
 
 ## Contact
 
 **Email:** ramakrishnaachyut@gmail.com
-**Project link:** https://github.com/ark097/Portfolio_Opt
+**Project link:** https://github.com/ark097/SmartFolio
